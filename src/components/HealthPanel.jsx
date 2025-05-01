@@ -6,6 +6,10 @@ import {
   Activity 
 } from 'lucide-react';
 
+import goodHealthAvatar from '../assets/avatar-images/health/good.png';
+import averageHealthAvatar from '../assets/avatar-images/health/neutral.png';
+import badHealthAvatar from '../assets/avatar-images/health/poor.png';
+
 const HealthPanel = ({ 
   overallHealth = 75, 
   healthScore = 70, 
@@ -35,7 +39,7 @@ const HealthPanel = ({
       <div className="p-6 relative min-h-56">
         {/* Background avatar image that changes with state */}
         <div 
-          className="absolute inset-0 opacity-20 bg-center bg-cover transition-opacity duration-500"
+          className="absolute inset-0 opacity-100 bg-center bg-contain bg-no-repeat transition-opacity duration-500"
           style={{ backgroundImage: `url(${bgImage})` }}
         ></div>
         
@@ -165,14 +169,14 @@ function getAvatarState(overallHealth, stressScore) {
 function getAvatarImage(state) {
   // In a real app, these would be actual image paths
   const images = {
-    excellent: '/avatar-excellent.png',
-    average: '/avatar-average.png',
-    stressed: '/avatar-stressed.png',
-    poor: '/avatar-poor.png',
+    excellent: goodHealthAvatar,
+    average: averageHealthAvatar,
+    stressed: badHealthAvatar,
+    poor: badHealthAvatar,
   };
   
   // For demo purposes, using placeholder images
-  return images[state] || '/avatar-average.png';
+  return images[state] || averageHealthAvatar;
 }
 
 function getMetricColor(value) {
