@@ -68,8 +68,8 @@ function App() {
     <div className="min-h-screen bg-gray-100 py-8 px-4">
       <div className="max-w-2xl mx-auto">
         <header className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-indigo-800">Your Digital Twin</h1>
-          <p className="text-gray-600">Evolving as you evolve, learning as you learn</p>
+          <h1 className="text-3xl font-bold text-indigo-800">EvolveMe</h1>
+          <p className="text-gray-600">Two journeys. One evolution. Real results.</p>
         </header>
         
         <main className="space-y-6">
