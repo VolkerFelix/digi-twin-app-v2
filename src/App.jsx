@@ -4,20 +4,16 @@ import ModelAccuracyPanel from './components/ModelAccuracyPanel';
 import AIChatPanel from './components/AIChatPanel';
 import ModelImprovementPanel from './components/ModelImprovementPanel';
 import LifeChallengesPanel from './components/LifeChallengesPanel';
+import WorkoutCompleteModal from './components/WorkoutCompleteModal';
 import './App.css';
 
 function App() {
   // Reference to the top of the page
   const topRef = useRef(null);
   
-  // Focus the top element on page load
-  useEffect(() => {
-    // Set focus to the top element when component mounts
-    if (topRef.current) {
-      topRef.current.focus();
-    }
-  }, []);
-
+  // Modal state
+  const [showWorkoutModal, setShowWorkoutModal] = useState(false);
+  
   // Mock state for the entire app
   const [digitalTwinState, setDigitalTwinState] = useState({
     // User info
@@ -55,7 +51,58 @@ function App() {
       progress: 2, // Days completed
       totalDays: 5
     },
+    
+    // Recent workout data
+    lastWorkout: {
+      completed: false,
+      type: 'HIIT',
+      duration: 45, // minutes
+      caloriesBurned: 320,
+      date: new Date().toISOString(),
+      improvements: {
+        healthScore: 5,
+        energyScore: 8,
+        cognitiveScore: 3,
+        stressScore: -7 // Negative because lower stress is better
+      }
+    }
   });
+  
+  // Focus the top element on page load
+  useEffect(() => {
+    // Set focus to the top element when component mounts
+    if (topRef.current) {
+      topRef.current.focus();
+    }
+  }, []);
+  
+  // Simulate workout completion (for demo purposes)
+  const simulateWorkoutComplete = () => {
+    // Update the lastWorkout status
+    setDigitalTwinState(prev => ({
+      ...prev,
+      lastWorkout: {
+        ...prev.lastWorkout,
+        completed: true
+      },
+      // Apply improvements to health metrics
+      health: {
+        overallHealth: prev.health.overallHealth + 3,
+        healthScore: prev.health.healthScore + prev.lastWorkout.improvements.healthScore,
+        energyScore: prev.health.energyScore + prev.lastWorkout.improvements.energyScore,
+        cognitiveScore: prev.health.cognitiveScore + prev.lastWorkout.improvements.cognitiveScore,
+        stressScore: prev.health.stressScore + prev.lastWorkout.improvements.stressScore
+      }
+    }));
+    
+    // Show the workout complete modal
+    setShowWorkoutModal(true);
+  };
+  
+  // Handle workout modal close
+  const handleWorkoutModalClose = () => {
+    setShowWorkoutModal(false);
+  };
   
   // Handle mission acceptance
   const handleAcceptMission = (mission) => {
@@ -90,6 +137,16 @@ function App() {
           <h1 className="text-3xl font-bold text-indigo-800">EvolveMe</h1>
           <p className="text-gray-600">Two journeys. One evolution. Real results.</p>
         </header>
+        
+        {/* Demo button (for testing) - would be part of a workout tracking UI in a real app */}
+        <div className="mb-6 text-center">
+          <button
+            onClick={simulateWorkoutComplete}
+            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Simulate Workout Completion
+          </button>
+        </div>
         
         <main className="space-y-6">
           {/* 1. Health Panel */}
@@ -126,6 +183,13 @@ function App() {
           <p className="mt-1">Your data remains private and secure</p>
         </footer>
       </div>
+      
+      {/* Workout Complete Modal */}
+      <WorkoutCompleteModal 
+        isOpen={showWorkoutModal}
+        onClose={handleWorkoutModalClose}
+        improvements={digitalTwinState.lastWorkout.improvements}
+      />
     </div>
   );
 }

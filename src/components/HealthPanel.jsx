@@ -161,7 +161,7 @@ const RingProgress = ({ percentage, size, color, icon }) => {
 
 function getAvatarState(overallHealth, stressScore) {
   if (overallHealth < 40) return 'poor';
-  if (overallHealth > 80) return 'excellent';
+  if (overallHealth >= 75) return 'excellent';
   if (stressScore > 70) return 'stressed';
   return 'average';
 }
