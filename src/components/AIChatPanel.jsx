@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Send, User, Flag, ThumbsUp, ThumbsDown } from 'lucide-react';
 
 const AIChatPanel = ({ 
-  userName = 'Sarah',
+  userName = 'David',
   activeMission = null,
   onAcceptMission = () => {},
   onDeclineMission = () => {}

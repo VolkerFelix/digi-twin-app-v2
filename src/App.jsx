@@ -22,7 +22,7 @@ function App() {
   const [digitalTwinState, setDigitalTwinState] = useState({
     // User info
     user: {
-      name: 'Sarah',
+      name: 'David',
       age: 32,
       joinDate: '2023-11-15'
     },

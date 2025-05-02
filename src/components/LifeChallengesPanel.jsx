@@ -111,7 +111,7 @@ const LifeChallengesPanel = ({
   return (
     <div className="rounded-xl overflow-hidden shadow-lg bg-white mt-6">
       <div className="text-lg font-semibold p-4 bg-red-700 text-white flex justify-between items-center">
-        <span>Life Challenges</span>
+        <span>Your Twins Current Life Challenges</span>
         <div className="flex items-center text-sm bg-red-600 py-1 px-2 rounded">
           <AlertTriangle className="h-4 w-4 mr-1" />
           <span>{activeChallenges.length} Active</span>
@@ -120,7 +120,7 @@ const LifeChallengesPanel = ({
       
       <div className="p-6">
         <div className="text-sm text-gray-500 mb-4">
-          Your Digital Twin has identified these challenges based on your recent patterns
+          Can you help him overcome these challenges?
         </div>
         
         {activeChallenges.length === 0 ? (
