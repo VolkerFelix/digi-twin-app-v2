@@ -3,6 +3,7 @@ import HealthPanel from './components/HealthPanel';
 import WorkoutCompleteModal from './components/WorkoutCompleteModal';
 import CombinedModelPanel from './components/CombinedModelPanel';
 import CombinedInteractionPanel from './components/CombinedInteractionPanel';
+import { FuturePredictionsPanel } from './components/predictions';
 import './App.css';
 
 function App() {
@@ -28,6 +29,14 @@ function App() {
       energyScore: 75,
       cognitiveScore: 83,
       stressScore: 42
+    },
+    
+    // User behavior patterns (for predictions)
+    behavior: {
+      sleepConsistency: 'improving', // 'improving', 'declining', 'stable'
+      exerciseFrequency: 'stable',
+      nutritionQuality: 'declining',
+      stressManagement: 'improving'
     },
     
     // Model accuracies
@@ -255,6 +264,12 @@ function App() {
             onAcceptMission={handleAcceptMission}
             onDeclineMission={handleDeclineMission}
             challenges={digitalTwinState.challenges}
+          />
+          
+          {/* 4. Future Predictions Panel */}
+          <FuturePredictionsPanel
+            currentMetrics={digitalTwinState.health}
+            userBehavior={digitalTwinState.behavior}
           />
         </main>
         
