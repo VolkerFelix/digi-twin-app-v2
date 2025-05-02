@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import HealthPanel from './components/HealthPanel';
 import ModelAccuracyPanel from './components/ModelAccuracyPanel';
 import AIChatPanel from './components/AIChatPanel';
@@ -7,6 +7,17 @@ import LifeChallengesPanel from './components/LifeChallengesPanel';
 import './App.css';
 
 function App() {
+  // Reference to the top of the page
+  const topRef = useRef(null);
+  
+  // Focus the top element on page load
+  useEffect(() => {
+    // Set focus to the top element when component mounts
+    if (topRef.current) {
+      topRef.current.focus();
+    }
+  }, []);
+
   // Mock state for the entire app
   const [digitalTwinState, setDigitalTwinState] = useState({
     // User info
@@ -66,6 +77,14 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
+      {/* Invisible, focusable element at the top of the page */}
+      <div
+        ref={topRef}
+        tabIndex={-1}
+        style={{ outline: 'none' }}
+        aria-hidden="true"
+      />
+      
       <div className="max-w-2xl mx-auto">
         <header className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-indigo-800">EvolveMe</h1>

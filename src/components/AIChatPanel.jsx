@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Send, User, Flag, XCircle, ThumbsUp, ThumbsDown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Send, User, Flag, ThumbsUp, ThumbsDown } from 'lucide-react';
 
 const AIChatPanel = ({ 
   userName = 'Sarah',
@@ -7,34 +7,39 @@ const AIChatPanel = ({
   onAcceptMission = () => {},
   onDeclineMission = () => {}
 }) => {
-  const [messages, setMessages] = useState([]);
+  // Initial messages with the greeting and optional mission
+  const initialMessages = [
+    {
+      id: 1,
+      timestamp: new Date(),
+      sender: 'twin',
+      text: `Hello ${userName}! I'm your Digital Twin. I'll learn from your habits and help you optimize your health.`,
+      type: 'greeting'
+    }
+  ];
+
+  // If there's an active mission, add it to the initial messages
+  if (activeMission) {
+    initialMessages.push({
+      id: 2,
+      timestamp: new Date(),
+      sender: 'twin',
+      text: `I have a mission for you, ${userName}!`,
+      type: 'text'
+    });
+    
+    initialMessages.push({
+      id: 3,
+      timestamp: new Date(),
+      sender: 'twin',
+      mission: activeMission,
+      type: 'mission'
+    });
+  }
+
+  const [messages, setMessages] = useState(initialMessages);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef(null);
-  
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-  
-  // Initialize with a welcome message
-  useEffect(() => {
-    // Add initial greeting
-    setTimeout(() => {
-      addMessage({
-        sender: 'twin',
-        text: `Hello ${userName}! I'm your Digital Twin. I'll learn from your habits and help you optimize your health.`,
-        type: 'greeting'
-      });
-    }, 1000);
-    
-    // If there's an active mission, suggest it after a delay
-    if (activeMission) {
-      setTimeout(() => {
-        suggestMission(activeMission);
-      }, 2500);
-    }
-  }, [userName, activeMission]);
   
   // Add a message to the chat
   const addMessage = (message) => {
@@ -276,9 +281,6 @@ const AIChatPanel = ({
                 </div>
               </div>
             )}
-            
-            {/* Auto-scroll anchor */}
-            <div ref={messagesEndRef}></div>
           </div>
         </div>
         
