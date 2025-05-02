@@ -1,138 +1,287 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Calendar, 
-  Heart, 
-  Battery, 
-  Brain, 
-  Activity 
-} from 'lucide-react';
+import React, { useState } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area } from 'recharts';
+import { Heart, Battery, Brain, Activity, Calendar, TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
 
-// Import components
-import PredictionChart from './PredictionChart';
-import InsightCard from './InsightCard';
-
-// Import utility functions
-import { 
-  generatePredictiveData, 
-  generateInsights 
-} from '../../utils/predictionUtils';
-
-/**
- * Panel that displays future predictions for health metrics
- */
-const FuturePredictionsPanel = ({ 
-  currentMetrics = {
-    healthScore: 68,
-    energyScore: 75,
-    cognitiveScore: 83,
-    stressScore: 42
-  },
-  userBehavior = {
-    sleepConsistency: 'improving', // 'improving', 'declining', 'stable'
-    exerciseFrequency: 'stable',
-    nutritionQuality: 'declining',
-    stressManagement: 'improving'
-  }
-}) => {
-  const [viewMode, setViewMode] = useState('charts'); // 'charts' or 'insights'
-  const [activeMetric, setActiveMetric] = useState('health'); // 'health', 'energy', 'cognitive', 'stress'
-  const [timeRange, setTimeRange] = useState('7days'); // '7days' or 'tomorrow'
-  const [predictiveData, setPredictiveData] = useState(null);
-  const [insights, setInsights] = useState([]);
+const FuturePredictionsPanel = () => {
+  const [viewMode, setViewMode] = useState('charts');
+  const [activeMetric, setActiveMetric] = useState('health');
+  const [timeRange, setTimeRange] = useState('7days');
   
-  // Generate predictive data when component mounts or dependencies change
-  useEffect(() => {
-    // Generate data for both time ranges
-    const generatedData = {
-      health: {
-        '7days': generatePredictiveData(
-          currentMetrics.healthScore, 
-          2, // volatility
-          userBehavior.nutritionQuality === 'improving' ? 0.7 : 
-            userBehavior.nutritionQuality === 'declining' ? -0.7 : 0.2,
-          '7days'
-        ),
-        'tomorrow': generatePredictiveData(
-          currentMetrics.healthScore, 
-          1.5, // less volatility for a single day
-          userBehavior.nutritionQuality === 'improving' ? 0.5 : 
-            userBehavior.nutritionQuality === 'declining' ? -0.5 : 0.1,
-          'tomorrow'
-        )
-      },
-      energy: {
-        '7days': generatePredictiveData(
-          currentMetrics.energyScore, 
-          2.5, // more volatile
-          userBehavior.sleepConsistency === 'improving' ? 0.8 : 
-            userBehavior.sleepConsistency === 'declining' ? -0.8 : 0.1,
-          '7days'
-        ),
-        'tomorrow': generatePredictiveData(
-          currentMetrics.energyScore, 
-          2, // volatile throughout the day
-          userBehavior.sleepConsistency === 'improving' ? 0.6 : 
-            userBehavior.sleepConsistency === 'declining' ? -0.6 : 0.1,
-          'tomorrow'
-        )
-      },
-      cognitive: {
-        '7days': generatePredictiveData(
-          currentMetrics.cognitiveScore, 
-          1.8, // less volatile
-          userBehavior.exerciseFrequency === 'improving' ? 0.6 : 
-            userBehavior.exerciseFrequency === 'declining' ? -0.5 : 0.3,
-          '7days'
-        ),
-        'tomorrow': generatePredictiveData(
-          currentMetrics.cognitiveScore, 
-          1.6, // fairly stable
-          userBehavior.exerciseFrequency === 'improving' ? 0.5 : 
-            userBehavior.exerciseFrequency === 'declining' ? -0.4 : 0.2,
-          'tomorrow'
-        )
-      },
-      stress: {
-        '7days': generatePredictiveData(
-          currentMetrics.stressScore, 
-          3, // more volatile
-          userBehavior.stressManagement === 'improving' ? -0.9 : 
-            userBehavior.stressManagement === 'declining' ? 0.9 : -0.1,
-          '7days'
-        ),
-        'tomorrow': generatePredictiveData(
-          currentMetrics.stressScore, 
-          2.5, // volatile during the day
-          userBehavior.stressManagement === 'improving' ? -0.8 : 
-            userBehavior.stressManagement === 'declining' ? 0.8 : -0.1,
-          'tomorrow'
-        )
+  // Sample data for demonstration
+  const healthData = [
+    { day: 'Today', period: 'Morning', value: 69 },
+    { day: 'Today', period: 'Afternoon', value: 72 },
+    { day: 'Today', period: 'Evening', value: 68 },
+    { day: 'Tmrw', period: 'Morning', value: 70 },
+    { day: 'Tmrw', period: 'Afternoon', value: 73 },
+    { day: 'Tmrw', period: 'Evening', value: 71 },
+    { day: 'Wed', period: 'Morning', value: 72 },
+    { day: 'Wed', period: 'Afternoon', value: 75 },
+    { day: 'Wed', period: 'Evening', value: 73 },
+    { day: 'Thu', period: 'Morning', value: 74 },
+    { day: 'Thu', period: 'Afternoon', value: 76 },
+    { day: 'Thu', period: 'Evening', value: 75 },
+    { day: 'Fri', period: 'Morning', value: 75 },
+    { day: 'Fri', period: 'Afternoon', value: 77 },
+    { day: 'Fri', period: 'Evening', value: 76 },
+    { day: 'Sat', period: 'Morning', value: 77 },
+    { day: 'Sat', period: 'Afternoon', value: 79 },
+    { day: 'Sat', period: 'Evening', value: 78 },
+    { day: 'Sun', period: 'Morning', value: 79 },
+    { day: 'Sun', period: 'Afternoon', value: 80 },
+    { day: 'Sun', period: 'Evening', value: 81 },
+  ];
+  
+  const energyData = [
+    { day: 'Today', period: 'Morning', value: 75 },
+    { day: 'Today', period: 'Afternoon', value: 72 },
+    { day: 'Today', period: 'Evening', value: 68 },
+    { day: 'Tmrw', period: 'Morning', value: 76 },
+    { day: 'Tmrw', period: 'Afternoon', value: 73 },
+    { day: 'Tmrw', period: 'Evening', value: 70 },
+    { day: 'Wed', period: 'Morning', value: 77 },
+    { day: 'Wed', period: 'Afternoon', value: 74 },
+    { day: 'Wed', period: 'Evening', value: 71 },
+    { day: 'Thu', period: 'Morning', value: 78 },
+    { day: 'Thu', period: 'Afternoon', value: 75 },
+    { day: 'Thu', period: 'Evening', value: 72 },
+    { day: 'Fri', period: 'Morning', value: 80 },
+    { day: 'Fri', period: 'Afternoon', value: 77 },
+    { day: 'Fri', period: 'Evening', value: 73 },
+    { day: 'Sat', period: 'Morning', value: 81 },
+    { day: 'Sat', period: 'Afternoon', value: 78 },
+    { day: 'Sat', period: 'Evening', value: 74 },
+    { day: 'Sun', period: 'Morning', value: 83 },
+    { day: 'Sun', period: 'Afternoon', value: 80 },
+    { day: 'Sun', period: 'Evening', value: 76 },
+  ];
+  
+  const cognitiveData = [
+    { day: 'Today', period: 'Morning', value: 83 },
+    { day: 'Today', period: 'Afternoon', value: 80 },
+    { day: 'Today', period: 'Evening', value: 78 },
+    { day: 'Tmrw', period: 'Morning', value: 84 },
+    { day: 'Tmrw', period: 'Afternoon', value: 81 },
+    { day: 'Tmrw', period: 'Evening', value: 79 },
+    { day: 'Wed', period: 'Morning', value: 85 },
+    { day: 'Wed', period: 'Afternoon', value: 82 },
+    { day: 'Wed', period: 'Evening', value: 80 },
+    { day: 'Thu', period: 'Morning', value: 86 },
+    { day: 'Thu', period: 'Afternoon', value: 83 },
+    { day: 'Thu', period: 'Evening', value: 81 },
+    { day: 'Fri', period: 'Morning', value: 87 },
+    { day: 'Fri', period: 'Afternoon', value: 84 },
+    { day: 'Fri', period: 'Evening', value: 82 },
+    { day: 'Sat', period: 'Morning', value: 87 },
+    { day: 'Sat', period: 'Afternoon', value: 84 },
+    { day: 'Sat', period: 'Evening', value: 82 },
+    { day: 'Sun', period: 'Morning', value: 88 },
+    { day: 'Sun', period: 'Afternoon', value: 85 },
+    { day: 'Sun', period: 'Evening', value: 83 },
+  ];
+  
+  const stressData = [
+    { day: 'Today', period: 'Morning', value: 42 },
+    { day: 'Today', period: 'Afternoon', value: 45 },
+    { day: 'Today', period: 'Evening', value: 47 },
+    { day: 'Tmrw', period: 'Morning', value: 43 },
+    { day: 'Tmrw', period: 'Afternoon', value: 46 },
+    { day: 'Tmrw', period: 'Evening', value: 48 },
+    { day: 'Wed', period: 'Morning', value: 41 },
+    { day: 'Wed', period: 'Afternoon', value: 44 },
+    { day: 'Wed', period: 'Evening', value: 46 },
+    { day: 'Thu', period: 'Morning', value: 40 },
+    { day: 'Thu', period: 'Afternoon', value: 43 },
+    { day: 'Thu', period: 'Evening', value: 45 },
+    { day: 'Fri', period: 'Morning', value: 39 },
+    { day: 'Fri', period: 'Afternoon', value: 42 },
+    { day: 'Fri', period: 'Evening', value: 44 },
+    { day: 'Sat', period: 'Morning', value: 38 },
+    { day: 'Sat', period: 'Afternoon', value: 41 },
+    { day: 'Sat', period: 'Evening', value: 43 },
+    { day: 'Sun', period: 'Morning', value: 37 },
+    { day: 'Sun', period: 'Afternoon', value: 40 },
+    { day: 'Sun', period: 'Evening', value: 42 },
+  ];
+  
+  // Get active data based on selected metric
+  const getActiveData = () => {
+    switch (activeMetric) {
+      case 'health': return healthData;
+      case 'energy': return energyData;
+      case 'cognitive': return cognitiveData;
+      case 'stress': return stressData;
+      default: return healthData;
+    }
+  };
+  
+  // Get color based on metric
+  const getMetricColor = () => {
+    switch (activeMetric) {
+      case 'health': return '#ef4444';
+      case 'energy': return '#3b82f6';
+      case 'cognitive': return '#8b5cf6';
+      case 'stress': return '#f59e0b';
+      default: return '#ef4444';
+    }
+  };
+
+  // Get icon based on metric
+  const getMetricIcon = () => {
+    switch (activeMetric) {
+      case 'health': return <Heart className="h-5 w-5" />;
+      case 'energy': return <Battery className="h-5 w-5" />;
+      case 'cognitive': return <Brain className="h-5 w-5" />;
+      case 'stress': return <Activity className="h-5 w-5" />;
+      default: return <Heart className="h-5 w-5" />;
+    }
+  };
+  
+  // Get trend info (comparing first and last data points)
+  const getTrendInfo = () => {
+    const data = getActiveData();
+    const startValue = data[0].value;
+    const endValue = data[data.length - 1].value;
+    const isTrendUp = endValue > startValue;
+    const isStress = activeMetric === 'stress';
+    
+    // For stress, downward trend is good; for others, upward trend is good
+    const isPositive = isStress ? !isTrendUp : isTrendUp;
+    
+    return {
+      startValue,
+      endValue,
+      isTrendUp,
+      isPositive,
+      difference: Math.abs(endValue - startValue)
+    };
+  };
+  
+  // Sample insights for the "Key Insights" tab
+  const insights = [
+    {
+      title: 'Improving Health Trend',
+      description: 'Your health metrics are projected to improve by 13% over the next week. Continue your current routine to maintain this positive trajectory.',
+      severity: 'positive'
+    },
+    {
+      title: 'Optimal Focus Time',
+      description: 'Your cognitive performance will likely be highest during mornings. Plan deep work or complex tasks during this period.',
+      severity: 'positive'
+    },
+    {
+      title: 'Afternoon Energy Dip',
+      description: 'Expect a natural energy dip in the afternoon. Plan for a short break or light physical activity to counteract it.',
+      severity: 'warning'
+    },
+    {
+      title: 'Decreasing Stress Levels',
+      description: 'Your stress levels are projected to gradually decrease over the next week. Your current approach is working well.',
+      severity: 'positive'
+    }
+  ];
+
+  // Function to render custom X-axis label to avoid overlapping
+  const renderCustomXAxisTick = ({ x, y, payload }) => {
+    // Only show every 3rd tick (one per day rather than every period)
+    if (payload.index % 3 !== 0) return null;
+    
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text x={0} y={0} dy={16} textAnchor="middle" fill="#666">
+          {payload.value}
+        </text>
+      </g>
+    );
+  };
+  
+  // Custom tooltip for chart
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white p-3 border rounded shadow-md">
+          <p className="font-medium">{`${data.day} ${data.period}`}</p>
+          <p className="text-sm">
+            <span className="font-medium">{activeMetric.charAt(0).toUpperCase() + activeMetric.slice(1)}: </span>
+            <span style={{ color: getMetricColor() }}>{data.value}%</span>
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+  
+  // Insight card component
+  const InsightCard = ({ title, description, severity }) => {
+    // Get icon and colors based on severity
+    const getIconAndColor = (severity) => {
+      switch (severity) {
+        case 'positive':
+          return {
+            icon: <TrendingUp className="h-5 w-5" />,
+            bgColor: 'bg-green-50',
+            textColor: 'text-green-700',
+            borderColor: 'border-green-200'
+          };
+        case 'warning':
+          return {
+            icon: <AlertTriangle className="h-5 w-5" />,
+            bgColor: 'bg-yellow-50',
+            textColor: 'text-yellow-700',
+            borderColor: 'border-yellow-200'
+          };
+        case 'negative':
+          return {
+            icon: <TrendingDown className="h-5 w-5" />,
+            bgColor: 'bg-red-50',
+            textColor: 'text-red-700',
+            borderColor: 'border-red-200'
+          };
+        default:
+          return {
+            icon: <TrendingUp className="h-5 w-5" />,
+            bgColor: 'bg-blue-50',
+            textColor: 'text-blue-700',
+            borderColor: 'border-blue-200'
+          };
       }
     };
     
-    setPredictiveData(generatedData);
-  }, [currentMetrics, userBehavior]);
-  
-  // Generate insights when predictive data or time range changes
-  useEffect(() => {
-    if (predictiveData) {
-      const newInsights = generateInsights(predictiveData, timeRange);
-      setInsights(newInsights);
-    }
-  }, [predictiveData, timeRange]);
-  
-  // If predictive data is not yet generated, show loading
-  if (!predictiveData) {
+    const { icon, bgColor, textColor, borderColor } = getIconAndColor(severity);
+    
     return (
-      <div className="rounded-xl overflow-hidden shadow-lg bg-white mt-6 p-8 text-center">
-        <div className="inline-block w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate.spin"></div>
-        <p className="mt-4 text-gray-500">Generating predictions...</p>
+      <div className={`p-4 border rounded-lg ${borderColor} ${bgColor}`}>
+        <div className="flex items-start">
+          <div className={`${textColor} mt-0.5 mr-3`}>
+            {icon}
+          </div>
+          <div>
+            <div className={`font-medium ${textColor}`}>{title}</div>
+            <div className="text-sm mt-1">{description}</div>
+          </div>
+        </div>
       </div>
     );
-  }
+  };
   
+  // Get trend indicator component
+  const TrendIndicator = () => {
+    const { isTrendUp, isPositive } = getTrendInfo();
+    return (
+      <span className={`flex items-center ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+        {isTrendUp ? (
+          <TrendingUp className="h-4 w-4 mr-1" />
+        ) : (
+          <TrendingDown className="h-4 w-4 mr-1" />
+        )}
+        <span className="text-xs">{isPositive ? "Improving" : "Declining"}</span>
+      </span>
+    );
+  };
+
   return (
-    <div className="rounded-xl overflow-hidden shadow-lg bg-white mt-6">
+    <div className="rounded-xl overflow-hidden shadow-lg bg-white">
       {/* Header with tabs */}
       <div className="text-lg font-semibold p-4 bg-indigo-700 text-white flex justify-between items-center">
         <span>Future Predictions</span>
@@ -169,7 +318,6 @@ const FuturePredictionsPanel = ({
         >
           Prediction Charts
         </button>
-        
         <button
           className={`flex-1 py-3 px-4 font-medium ${
             viewMode === 'insights' 
@@ -187,10 +335,7 @@ const FuturePredictionsPanel = ({
         {viewMode === 'charts' ? (
           <>
             <div className="text-sm text-gray-500 mb-4">
-              {timeRange === '7days' 
-                ? "Predictions based on your current behavior patterns and health trends for the next week" 
-                : "Hourly predictions for tomorrow based on your current patterns and trends"
-              }
+              Predictions based on your current behavior patterns and health trends for the next week
             </div>
             
             {/* Metric selector buttons */}
@@ -236,56 +381,128 @@ const FuturePredictionsPanel = ({
               </button>
             </div>
             
-            {/* Single chart display */}
+            {/* Chart display */}
             <div className="border rounded-lg p-6 shadow-sm bg-white">
-              {activeMetric === 'health' && (
-                <PredictionChart 
-                  title="Health Projection" 
-                  data={predictiveData.health[timeRange]}
-                  icon={<Heart className="h-8 w-8" />}
-                  color="text-red-500"
-                  expanded={true}
-                  userBehavior={userBehavior}
-                  timeRange={timeRange}
-                />
-              )}
+              {/* Header info */}
+              <div className="flex items-center mb-6">
+                <div className="flex items-center mr-3" style={{ color: getMetricColor() }}>
+                  {getMetricIcon()}
+                </div>
+                <div className="flex-1">
+                  <div className="text-xl font-medium">
+                    {activeMetric.charAt(0).toUpperCase() + activeMetric.slice(1)} Projection
+                  </div>
+                  <div className="flex items-center text-sm mt-1">
+                    <span className="text-gray-500">Today:</span> 
+                    <span className="ml-1 font-medium" style={{ color: getMetricColor() }}>
+                      {getTrendInfo().startValue}%
+                    </span>
+                    <span className="mx-2">→</span>
+                    <span className="text-gray-500">Day 7:</span>
+                    <span className="ml-1 font-medium" style={{ color: getMetricColor() }}>
+                      {getTrendInfo().endValue}%
+                    </span>
+                    <span className="ml-2">
+                      <TrendIndicator />
+                    </span>
+                  </div>
+                </div>
+              </div>
               
-              {activeMetric === 'energy' && (
-                <PredictionChart 
-                  title="Energy Projection" 
-                  data={predictiveData.energy[timeRange]}
-                  icon={<Battery className="h-8 w-8" />}
-                  color="text-blue-500"
-                  expanded={true}
-                  userBehavior={userBehavior}
-                  timeRange={timeRange}
-                />
-              )}
+              {/* Chart */}
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={getActiveData()}
+                    margin={{ top: 5, right: 20, left: 10, bottom: 25 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis 
+                      dataKey="day" 
+                      tick={renderCustomXAxisTick} 
+                      interval={0}
+                      padding={{ left: 10, right: 10 }}
+                    />
+                    <YAxis 
+                      domain={[0, 100]} 
+                      ticks={[0, 25, 50, 75, 100]}
+                      tickFormatter={(value) => `${value}%`}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <defs>
+                      <linearGradient id="colorFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={getMetricColor()} stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor={getMetricColor()} stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <Area 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke={getMetricColor()} 
+                      fillOpacity={1} 
+                      fill="url(#colorFill)" 
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke={getMetricColor()} 
+                      strokeWidth={3} 
+                      dot={{ r: 4, fill: getMetricColor(), stroke: getMetricColor() }}
+                      activeDot={{ r: 6, fill: getMetricColor(), stroke: '#fff', strokeWidth: 2 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
               
-              {activeMetric === 'cognitive' && (
-                <PredictionChart 
-                  title="Cognitive Projection" 
-                  data={predictiveData.cognitive[timeRange]}
-                  icon={<Brain className="h-8 w-8" />}
-                  color="text-purple-500"
-                  expanded={true}
-                  userBehavior={userBehavior}
-                  timeRange={timeRange}
-                />
-              )}
+              {/* Min/Max values */}
+              <div className="flex justify-between text-xs text-gray-500 mt-4">
+                <div className="font-medium">
+                  Min: {Math.min(...getActiveData().map(d => d.value))}%
+                </div>
+                <div className="font-medium">
+                  Max: {Math.max(...getActiveData().map(d => d.value))}%
+                </div>
+              </div>
               
-              {activeMetric === 'stress' && (
-                <PredictionChart 
-                  title="Stress Projection" 
-                  data={predictiveData.stress[timeRange]}
-                  icon={<Activity className="h-8 w-8" />}
-                  color="text-amber-500"
-                  isStress={true}
-                  expanded={true}
-                  userBehavior={userBehavior}
-                  timeRange={timeRange}
-                />
-              )}
+              {/* Factors influencing */}
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-medium mb-2">Factors Influencing this Prediction:</h3>
+                <ul className="text-sm space-y-2">
+                  <li className="flex items-start">
+                    <div className="h-5 w-5 rounded-full bg-indigo-100 flex items-center justify-center mr-2 mt-0.5">
+                      <span className="text-indigo-700 text-xs">1</span>
+                    </div>
+                    <span>
+                      {activeMetric === 'health' && "Nutrition quality is declining slightly"}
+                      {activeMetric === 'energy' && "Sleep habits are improving, boosting energy levels"}
+                      {activeMetric === 'cognitive' && "Exercise frequency is consistent, maintaining cognitive levels"}
+                      {activeMetric === 'stress' && "Your stress management techniques are showing positive results"}
+                    </span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="h-5 w-5 rounded-full bg-indigo-100 flex items-center justify-center mr-2 mt-0.5">
+                      <span className="text-indigo-700 text-xs">2</span>
+                    </div>
+                    <span>
+                      {activeMetric === 'health' && "Exercise consistency is an important factor in health trends"}
+                      {activeMetric === 'energy' && "Stress levels affect overall energy throughout the day"}
+                      {activeMetric === 'cognitive' && "Sleep quality directly impacts cognitive performance and memory"}
+                      {activeMetric === 'stress' && "Sleep quality has a significant impact on stress levels"}
+                    </span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="h-5 w-5 rounded-full bg-indigo-100 flex items-center justify-center mr-2 mt-0.5">
+                      <span className="text-indigo-700 text-xs">3</span>
+                    </div>
+                    <span>
+                      {activeMetric === 'health' && "Daily patterns show improvement strongest on weekends"}
+                      {activeMetric === 'energy' && "Energy typically peaks in the morning and dips mid-afternoon"}
+                      {activeMetric === 'cognitive' && "Cognitive function is typically highest in the morning hours"}
+                      {activeMetric === 'stress' && "Your weekend activities help reduce stress levels significantly"}
+                    </span>
+                  </li>
+                </ul>
+              </div>
             </div>
             
             <div className="mt-6 p-3 bg-indigo-50 rounded-lg text-sm text-indigo-600">
