@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import HealthPanel from './components/HealthPanel';
-import ModelAccuracyPanel from './components/ModelAccuracyPanel';
-import AIChatPanel from './components/AIChatPanel';
-import ModelImprovementPanel from './components/ModelImprovementPanel';
-import LifeChallengesPanel from './components/LifeChallengesPanel';
 import WorkoutCompleteModal from './components/WorkoutCompleteModal';
+import CombinedModelPanel from './components/CombinedModelPanel';
+import CombinedInteractionPanel from './components/CombinedInteractionPanel';
 import './App.css';
 
 function App() {
@@ -65,7 +63,93 @@ function App() {
         cognitiveScore: 3,
         stressScore: -7 // Negative because lower stress is better
       }
-    }
+    },
+    
+    // Recent model improvements
+    recentImprovements: [
+      {
+        id: '1',
+        type: 'sleep',
+        title: 'Consistent Sleep Schedule',
+        description: 'Your regular 11PM-6:30AM sleep pattern has improved sleep model accuracy by 12%',
+        date: '2 days ago',
+        impactPercentage: 12,
+        metrics: ['Sleep Model +12%', 'Cognitive Model +8%']
+      },
+      {
+        id: '2',
+        type: 'workout',
+        title: 'High Intensity Interval Training',
+        description: 'Your 3 HIIT sessions provided new cardiovascular recovery data',
+        date: '1 week ago',
+        impactPercentage: 9,
+        metrics: ['Cardiovascular Model +9%', 'Respiratory Model +6%']
+      },
+      {
+        id: '3',
+        type: 'consistency',
+        title: 'Consistent Data Collection',
+        description: '14-day streak of tracking metrics has significantly improved prediction accuracy',
+        date: '2 weeks ago',
+        impactPercentage: 15,
+        metrics: ['Overall Model +15%', 'Predictive Power +23%']
+      }
+    ],
+    
+    // Life challenges
+    challenges: [
+      {
+        id: 'stress-anxiety',
+        title: 'Chronic Stress and Anxiety',
+        description: "I'm feeling tired and anxious most days. My cortisol levels are consistently elevated and my HRV readings are declining.",
+        severity: 'high',
+        recommendations: [
+          "Try the '4-7-8' breathing technique three times daily",
+          "Reduce caffeine intake after 2pm",
+          "Schedule two 15-minute breaks during your workday"
+        ],
+        dataPoints: [
+          "Cortisol +42% above baseline",
+          "HRV -23% below normal range",
+          "Sleep quality declining"
+        ],
+        resolved: false
+      },
+      {
+        id: 'sleep-disruption',
+        title: 'Sleep Disruption',
+        description: "My sleep analysis shows frequent nighttime awakenings and reduced deep sleep phases over the past 9 days.",
+        severity: 'medium',
+        recommendations: [
+          "Maintain a consistent sleep/wake schedule",
+          "Reduce blue light exposure 90 minutes before bed",
+          "Keep bedroom temperature between 65-68°F"
+        ],
+        dataPoints: [
+          "Deep sleep reduced by 18%",
+          "5.2 awakenings per night (avg)",
+          "Heart rate variability decreasing during sleep"
+        ],
+        resolved: false
+      },
+      {
+        id: 'recovery-deficit',
+        title: 'Exercise Recovery Deficit',
+        description: "I'm not recovering properly between workouts. My muscle recovery markers show increasing inflammation.",
+        severity: 'low',
+        recommendations: [
+          "Add an extra rest day between high-intensity workouts",
+          "Increase protein intake by 15-20g on training days",
+          "Try contrast therapy (hot/cold) for faster recovery"
+        ],
+        dataPoints: [
+          "Recovery score -15% below baseline",
+          "Inflammatory markers elevated post-workout",
+          "Peak performance declining in successive workouts"
+        ],
+        resolved: false
+      }
+    ]
   });
   
   // Focus the top element on page load
@@ -158,24 +242,20 @@ function App() {
             stressScore={digitalTwinState.health.stressScore}
           />
           
-          {/* 2. Model Accuracy Panel */}
-          <ModelAccuracyPanel 
+          {/* 2. Combined Model Panel */}
+          <CombinedModelPanel 
             models={digitalTwinState.models}
+            recentImprovements={digitalTwinState.recentImprovements}
           />
           
-          {/* 3. AI Chat Panel */}
-          <AIChatPanel 
+          {/* 3. Combined Interaction Panel (replaces separate AI Chat and Life Challenges panels) */}
+          <CombinedInteractionPanel 
             userName={digitalTwinState.user.name}
             activeMission={digitalTwinState.activeMission}
             onAcceptMission={handleAcceptMission}
             onDeclineMission={handleDeclineMission}
+            challenges={digitalTwinState.challenges}
           />
-          
-          {/* 4. Model Improvement Panel */}
-          <ModelImprovementPanel />
-          
-          {/* 5. Life Challenges Panel */}
-          <LifeChallengesPanel />
         </main>
         
         <footer className="mt-12 text-center text-sm text-gray-500">
