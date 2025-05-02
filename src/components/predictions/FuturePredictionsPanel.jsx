@@ -1,118 +1,31 @@
 import React, { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area } from 'recharts';
 import { Heart, Battery, Brain, Activity, Calendar, TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
+import { healthData, energyData, cognitiveData, stressData, healthDataTomorrow, energyDataTomorrow, cognitiveDataTomorrow, stressDataTomorrow } from '../../utils/predictionDemoData';
 
 const FuturePredictionsPanel = () => {
   const [viewMode, setViewMode] = useState('charts');
   const [activeMetric, setActiveMetric] = useState('health');
-  const [timeRange, setTimeRange] = useState('7days');
+  const [timeRange, setTimeRange] = useState('tomorrow');
   
-  // Sample data for demonstration
-  const healthData = [
-    { day: 'Today', period: 'Morning', value: 69 },
-    { day: 'Today', period: 'Afternoon', value: 72 },
-    { day: 'Today', period: 'Evening', value: 68 },
-    { day: 'Tmrw', period: 'Morning', value: 70 },
-    { day: 'Tmrw', period: 'Afternoon', value: 73 },
-    { day: 'Tmrw', period: 'Evening', value: 71 },
-    { day: 'Wed', period: 'Morning', value: 72 },
-    { day: 'Wed', period: 'Afternoon', value: 75 },
-    { day: 'Wed', period: 'Evening', value: 73 },
-    { day: 'Thu', period: 'Morning', value: 74 },
-    { day: 'Thu', period: 'Afternoon', value: 76 },
-    { day: 'Thu', period: 'Evening', value: 75 },
-    { day: 'Fri', period: 'Morning', value: 75 },
-    { day: 'Fri', period: 'Afternoon', value: 77 },
-    { day: 'Fri', period: 'Evening', value: 76 },
-    { day: 'Sat', period: 'Morning', value: 77 },
-    { day: 'Sat', period: 'Afternoon', value: 79 },
-    { day: 'Sat', period: 'Evening', value: 78 },
-    { day: 'Sun', period: 'Morning', value: 79 },
-    { day: 'Sun', period: 'Afternoon', value: 80 },
-    { day: 'Sun', period: 'Evening', value: 81 },
-  ];
-  
-  const energyData = [
-    { day: 'Today', period: 'Morning', value: 75 },
-    { day: 'Today', period: 'Afternoon', value: 72 },
-    { day: 'Today', period: 'Evening', value: 68 },
-    { day: 'Tmrw', period: 'Morning', value: 76 },
-    { day: 'Tmrw', period: 'Afternoon', value: 73 },
-    { day: 'Tmrw', period: 'Evening', value: 70 },
-    { day: 'Wed', period: 'Morning', value: 77 },
-    { day: 'Wed', period: 'Afternoon', value: 74 },
-    { day: 'Wed', period: 'Evening', value: 71 },
-    { day: 'Thu', period: 'Morning', value: 78 },
-    { day: 'Thu', period: 'Afternoon', value: 75 },
-    { day: 'Thu', period: 'Evening', value: 72 },
-    { day: 'Fri', period: 'Morning', value: 80 },
-    { day: 'Fri', period: 'Afternoon', value: 77 },
-    { day: 'Fri', period: 'Evening', value: 73 },
-    { day: 'Sat', period: 'Morning', value: 81 },
-    { day: 'Sat', period: 'Afternoon', value: 78 },
-    { day: 'Sat', period: 'Evening', value: 74 },
-    { day: 'Sun', period: 'Morning', value: 83 },
-    { day: 'Sun', period: 'Afternoon', value: 80 },
-    { day: 'Sun', period: 'Evening', value: 76 },
-  ];
-  
-  const cognitiveData = [
-    { day: 'Today', period: 'Morning', value: 83 },
-    { day: 'Today', period: 'Afternoon', value: 80 },
-    { day: 'Today', period: 'Evening', value: 78 },
-    { day: 'Tmrw', period: 'Morning', value: 84 },
-    { day: 'Tmrw', period: 'Afternoon', value: 81 },
-    { day: 'Tmrw', period: 'Evening', value: 79 },
-    { day: 'Wed', period: 'Morning', value: 85 },
-    { day: 'Wed', period: 'Afternoon', value: 82 },
-    { day: 'Wed', period: 'Evening', value: 80 },
-    { day: 'Thu', period: 'Morning', value: 86 },
-    { day: 'Thu', period: 'Afternoon', value: 83 },
-    { day: 'Thu', period: 'Evening', value: 81 },
-    { day: 'Fri', period: 'Morning', value: 87 },
-    { day: 'Fri', period: 'Afternoon', value: 84 },
-    { day: 'Fri', period: 'Evening', value: 82 },
-    { day: 'Sat', period: 'Morning', value: 87 },
-    { day: 'Sat', period: 'Afternoon', value: 84 },
-    { day: 'Sat', period: 'Evening', value: 82 },
-    { day: 'Sun', period: 'Morning', value: 88 },
-    { day: 'Sun', period: 'Afternoon', value: 85 },
-    { day: 'Sun', period: 'Evening', value: 83 },
-  ];
-  
-  const stressData = [
-    { day: 'Today', period: 'Morning', value: 42 },
-    { day: 'Today', period: 'Afternoon', value: 45 },
-    { day: 'Today', period: 'Evening', value: 47 },
-    { day: 'Tmrw', period: 'Morning', value: 43 },
-    { day: 'Tmrw', period: 'Afternoon', value: 46 },
-    { day: 'Tmrw', period: 'Evening', value: 48 },
-    { day: 'Wed', period: 'Morning', value: 41 },
-    { day: 'Wed', period: 'Afternoon', value: 44 },
-    { day: 'Wed', period: 'Evening', value: 46 },
-    { day: 'Thu', period: 'Morning', value: 40 },
-    { day: 'Thu', period: 'Afternoon', value: 43 },
-    { day: 'Thu', period: 'Evening', value: 45 },
-    { day: 'Fri', period: 'Morning', value: 39 },
-    { day: 'Fri', period: 'Afternoon', value: 42 },
-    { day: 'Fri', period: 'Evening', value: 44 },
-    { day: 'Sat', period: 'Morning', value: 38 },
-    { day: 'Sat', period: 'Afternoon', value: 41 },
-    { day: 'Sat', period: 'Evening', value: 43 },
-    { day: 'Sun', period: 'Morning', value: 37 },
-    { day: 'Sun', period: 'Afternoon', value: 40 },
-    { day: 'Sun', period: 'Evening', value: 42 },
-  ];
-  
-  // Get active data based on selected metric
+  // Get active data based on selected metric and time range
   const getActiveData = () => {
-    switch (activeMetric) {
-      case 'health': return healthData;
-      case 'energy': return energyData;
-      case 'cognitive': return cognitiveData;
-      case 'stress': return stressData;
-      default: return healthData;
-    }
+    const dataMap = {
+      '7days': {
+        health: healthData,
+        energy: energyData,
+        cognitive: cognitiveData,
+        stress: stressData
+      },
+      'tomorrow': {
+        health: healthDataTomorrow,
+        energy: energyDataTomorrow,
+        cognitive: cognitiveDataTomorrow,
+        stress: stressDataTomorrow
+      }
+    };
+    
+    return dataMap[timeRange][activeMetric] || healthData;
   };
   
   // Get color based on metric
@@ -289,18 +202,18 @@ const FuturePredictionsPanel = () => {
           {/* Time range selector */}
           <div className="flex rounded-lg overflow-hidden bg-indigo-800 text-xs">
             <button 
-              className={`py-1 px-3 flex items-center ${timeRange === '7days' ? 'bg-indigo-600' : 'hover:bg-indigo-600/50'}`}
-              onClick={() => setTimeRange('7days')}
-            >
-              <Calendar className="h-3 w-3 mr-1" />
-              <span>7 Days</span>
-            </button>
-            <button 
               className={`py-1 px-3 flex items-center ${timeRange === 'tomorrow' ? 'bg-indigo-600' : 'hover:bg-indigo-600/50'}`}
               onClick={() => setTimeRange('tomorrow')}
             >
               <Calendar className="h-3 w-3 mr-1" />
               <span>Tomorrow</span>
+            </button>
+            <button 
+              className={`py-1 px-3 flex items-center ${timeRange === '7days' ? 'bg-indigo-600' : 'hover:bg-indigo-600/50'}`}
+              onClick={() => setTimeRange('7days')}
+            >
+              <Calendar className="h-3 w-3 mr-1" />
+              <span>7 Days</span>
             </button>
           </div>
         </div>
