@@ -1,17 +1,27 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import HealthPanel from './components/HealthPanel';
 import WorkoutCompleteModal from './components/WorkoutCompleteModal';
 import CombinedModelPanel from './components/CombinedModelPanel';
 import CombinedInteractionPanel from './components/CombinedInteractionPanel';
-import { FuturePredictionsPanel } from './components/predictions';
+import FuturePredictionsPanel from './components/predictions/FuturePredictionsPanel';
+import WebSocketConnection from './components/WebSocketConnection';
+import { getAuthToken, getUserFromToken } from './utils/auth';
 import './App.css';
 
 function App() {
   // Reference to the top of the page
   const topRef = useRef(null);
   
+  // Authentication state
+  const [authToken, setAuthToken] = useState(getAuthToken());
+  const [user, setUser] = useState(null);
+  
+  // Data refresh state
+  const [lastDataUpdate, setLastDataUpdate] = useState(Date.now());
+  
   // Modal state
   const [showWorkoutModal, setShowWorkoutModal] = useState(false);
+  const [showDataUpdateNotification, setShowDataUpdateNotification] = useState(false);
   
   // Mock state for the entire app
   const [digitalTwinState, setDigitalTwinState] = useState({
@@ -161,6 +171,14 @@ function App() {
     ]
   });
   
+  // Initialize user on component mount
+  useEffect(() => {
+    if (authToken) {
+      const userData = getUserFromToken();
+      setUser(userData);
+    }
+  }, [authToken]);
+  
   // Focus the top element on page load
   useEffect(() => {
     // Set focus to the top element when component mounts
@@ -168,6 +186,76 @@ function App() {
       topRef.current.focus();
     }
   }, []);
+  
+  // Fetch health data from backend API
+  const fetchHealthData = useCallback(async () => {
+    if (!authToken) return;
+    
+    try {
+      // In a real app, you would make an API call like this:
+      // const response = await fetch('/api/health-data', {
+      //   headers: {
+      //     'Authorization': `Bearer ${authToken}`
+      //   }
+      // });
+      // const data = await response.json();
+      
+      // For demo purposes, we'll just simulate a data update
+      console.log('Fetching new health data...');
+      
+      // Simulate API response with random improvements
+      const healthImprovement = Math.floor(Math.random() * 5) + 1;
+      const energyImprovement = Math.floor(Math.random() * 6) + 2;
+      const cognitiveImprovement = Math.floor(Math.random() * 4) + 1;
+      const stressImprovement = -1 * (Math.floor(Math.random() * 5) + 1); // Negative because stress reduction is good
+      
+      // Update digital twin state with new health metrics
+      setDigitalTwinState(prev => ({
+        ...prev,
+        health: {
+          overallHealth: Math.min(100, prev.health.overallHealth + healthImprovement),
+          healthScore: Math.min(100, prev.health.healthScore + healthImprovement),
+          energyScore: Math.min(100, prev.health.energyScore + energyImprovement),
+          cognitiveScore: Math.min(100, prev.health.cognitiveScore + cognitiveImprovement),
+          stressScore: Math.max(0, prev.health.stressScore + stressImprovement)
+        },
+        lastWorkout: {
+          ...prev.lastWorkout,
+          completed: true,
+          date: new Date().toISOString(),
+          improvements: {
+            healthScore: healthImprovement,
+            energyScore: energyImprovement,
+            cognitiveScore: cognitiveImprovement,
+            stressScore: stressImprovement
+          }
+        }
+      }));
+      
+      // Update last data update timestamp
+      setLastDataUpdate(Date.now());
+      
+    } catch (error) {
+      console.error('Error fetching health data:', error);
+    }
+  }, [authToken]);
+  
+  // Handle new data notifications from WebSocket
+  const handleNewDataNotification = useCallback((data) => {
+    console.log('New health data notification received:', data);
+    
+    // Show notification
+    setShowDataUpdateNotification(true);
+    
+    // Hide notification after 5 seconds
+    setTimeout(() => {
+      setShowDataUpdateNotification(false);
+    }, 5000);
+    
+    // Fetch the new data
+    fetchHealthData();
+    
+  }, [fetchHealthData]);
   
   // Simulate workout completion (for demo purposes)
   const simulateWorkoutComplete = () => {
@@ -226,10 +314,27 @@ function App() {
       />
       
       <div className="max-w-2xl mx-auto">
-        <header className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-indigo-800">EvolveMe</h1>
-          <p className="text-gray-600">Two journeys. One evolution. Real results.</p>
+        <header className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-indigo-800">EvolveMe</h1>
+            <p className="text-gray-600">Two journeys. One evolution. Real results.</p>
+          </div>
+          
+          {/* WebSocket connection and notifications */}
+          {authToken && (
+            <WebSocketConnection 
+              token={authToken} 
+              onNewData={handleNewDataNotification} 
+            />
+          )}
         </header>
+        
+        {/* New data notification */}
+        {showDataUpdateNotification && (
+          <div className="fixed top-4 right-4 bg-green-600 text-white py-2 px-4 rounded shadow-lg animate-pulse z-50">
+            New health data available! Dashboard updated.
+          </div>
+        )}
         
         {/* Demo button (for testing) - would be part of a workout tracking UI in a real app */}
         <div className="mb-6 text-center">
