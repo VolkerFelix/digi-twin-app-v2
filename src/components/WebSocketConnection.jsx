@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { MessageSquare, Bell, X } from 'lucide-react';
+import { WS_ENDPOINT } from '../config/apiConfig';
 
 const WebSocketConnection = ({ token, onNewData }) => {
   const [connected, setConnected] = useState(false);
@@ -22,13 +23,9 @@ const WebSocketConnection = ({ token, onNewData }) => {
       reconnectTimeoutRef.current = null;
     }
 
-    // Get the WebSocket URL from the current window location
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = process.env.REACT_APP_API_HOST || window.location.host;
-    const wsUrl = `${protocol}//${host}/ws`;
-
     try {
       // Create new WebSocket connection with auth token
+      const wsUrl = `${WS_ENDPOINT}?token=${token}`;
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 

@@ -1,20 +1,6 @@
+// Updated authService.js
+import { AUTH_ENDPOINTS } from '../config/apiConfig';
 import { saveAuthToken, removeAuthToken, getAuthToken, isAuthenticated } from './auth';
-
-/**
- * API endpoint for login
- * @type {string}
- */
-const LOGIN_ENDPOINT = process.env.REACT_APP_API_URL 
-  ? `${process.env.REACT_APP_API_URL}/login`
-  : '/login';
-
-/**
- * API endpoint for registration
- * @type {string}
- */
-const REGISTER_ENDPOINT = process.env.REACT_APP_API_URL 
-  ? `${process.env.REACT_APP_API_URL}/register_user`
-  : '/register_user';
 
 /**
  * Authenticate user with username and password
@@ -24,7 +10,7 @@ const REGISTER_ENDPOINT = process.env.REACT_APP_API_URL
  */
 export const login = async (username, password) => {
   try {
-    const response = await fetch(LOGIN_ENDPOINT, {
+    const response = await fetch(AUTH_ENDPOINTS.login, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -61,7 +47,7 @@ export const login = async (username, password) => {
  */
 export const register = async (username, email, password) => {
   try {
-    const response = await fetch(REGISTER_ENDPOINT, {
+    const response = await fetch(AUTH_ENDPOINTS.register, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

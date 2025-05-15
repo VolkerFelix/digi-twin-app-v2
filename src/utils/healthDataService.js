@@ -1,39 +1,6 @@
+// Updated healthDataService.js
+import { HEALTH_ENDPOINTS } from '../config/apiConfig';
 import { getAuthHeaders } from './auth';
-
-/**
- * API endpoint base for health data
- * @type {string}
- */
-const HEALTH_API_BASE = process.env.REACT_APP_API_URL 
-  ? `${process.env.REACT_APP_API_URL}/health`
-  : '/health';
-
-/**
- * Fetch health data from the API
- * @returns {Promise<Object>} - The health data response
- */
-export const fetchHealthData = async () => {
-  try {
-    const response = await fetch(`${HEALTH_API_BASE}/data`, {
-      method: 'GET',
-      headers: {
-        ...getAuthHeaders(),
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to fetch health data');
-    }
-
-    const data = await response.json();
-    return { success: true, data };
-  } catch (error) {
-    console.error('Error fetching health data:', error);
-    return { success: false, error: error.message };
-  }
-};
 
 /**
  * Upload health data to the API
@@ -42,7 +9,7 @@ export const fetchHealthData = async () => {
  */
 export const uploadHealthData = async (healthData) => {
   try {
-    const response = await fetch(`${HEALTH_API_BASE}/upload_health`, {
+    const response = await fetch(HEALTH_ENDPOINTS.upload, {
       method: 'POST',
       headers: {
         ...getAuthHeaders(),
@@ -60,6 +27,33 @@ export const uploadHealthData = async (healthData) => {
     return { success: true, data };
   } catch (error) {
     console.error('Error uploading health data:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Fetch health data from the API
+ * @returns {Promise<Object>} - The health data response
+ */
+export const fetchHealthData = async () => {
+  try {
+    const response = await fetch(HEALTH_ENDPOINTS.fetch, {
+      method: 'GET',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to fetch health data');
+    }
+
+    const data = await response.json();
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error fetching health data:', error);
     return { success: false, error: error.message };
   }
 };

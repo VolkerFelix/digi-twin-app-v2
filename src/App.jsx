@@ -5,7 +5,11 @@ import CombinedModelPanel from './components/CombinedModelPanel';
 import CombinedInteractionPanel from './components/CombinedInteractionPanel';
 import FuturePredictionsPanel from './components/predictions/FuturePredictionsPanel';
 import WebSocketConnection from './components/WebSocketConnection';
+import LoginForm from './components/LoginForm'; // Add this import
+import HealthDataUploader from './components/HealthDataUploader';
 import { getAuthToken, getUserFromToken } from './utils/auth';
+import { fetchHealthData } from './utils/healthDataService';
+
 import './App.css';
 
 function App() {
@@ -15,6 +19,7 @@ function App() {
   // Authentication state
   const [authToken, setAuthToken] = useState(getAuthToken());
   const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(!!getAuthToken());
   
   // Data refresh state
   const [lastDataUpdate, setLastDataUpdate] = useState(Date.now());
@@ -176,8 +181,24 @@ function App() {
     if (authToken) {
       const userData = getUserFromToken();
       setUser(userData);
+      setIsAuthenticated(true);
     }
   }, [authToken]);
+
+  // Handle successful login
+  const handleLoginSuccess = (token) => {
+    setAuthToken(token);
+    const userData = getUserFromToken();
+    setUser(userData);
+    setIsAuthenticated(true);
+  };
+
+  // Handle health data upload success
+  const handleUploadSuccess = (data) => {
+    console.log('Health data uploaded successfully:', data);
+    // You could trigger a refresh of health data here
+    fetchHealthData();
+  };
   
   // Focus the top element on page load
   useEffect(() => {
@@ -328,56 +349,63 @@ function App() {
             />
           )}
         </header>
+
+        {/* Show login form if not authenticated */}
+        {!isAuthenticated ? (
+          <LoginForm onLoginSuccess={handleLoginSuccess} />
+        ) : (
+          <>
+            {/* New data notification */}
+            {showDataUpdateNotification && (
+              <div className="fixed top-4 right-4 bg-green-600 text-white py-2 px-4 rounded shadow-lg animate-pulse z-50">
+                New health data available! Dashboard updated.
+              </div>
+            )}
         
-        {/* New data notification */}
-        {showDataUpdateNotification && (
-          <div className="fixed top-4 right-4 bg-green-600 text-white py-2 px-4 rounded shadow-lg animate-pulse z-50">
-            New health data available! Dashboard updated.
-          </div>
+            {/* Demo button (for testing) - would be part of a workout tracking UI in a real app */}
+            <div className="mb-6 text-center">
+              <button
+                onClick={simulateWorkoutComplete}
+                className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Simulate Workout Completion
+              </button>
+            </div>
+          
+            <main className="space-y-6">
+              {/* 1. Health Panel */}
+              <HealthPanel 
+                overallHealth={digitalTwinState.health.overallHealth}
+                healthScore={digitalTwinState.health.healthScore}
+                energyScore={digitalTwinState.health.energyScore}
+                cognitiveScore={digitalTwinState.health.cognitiveScore}
+                stressScore={digitalTwinState.health.stressScore}
+              />
+              
+              {/* 2. Combined Model Panel */}
+              <CombinedModelPanel 
+                models={digitalTwinState.models}
+                recentImprovements={digitalTwinState.recentImprovements}
+              />
+              
+              {/* 3. Combined Interaction Panel (replaces separate AI Chat and Life Challenges panels) */}
+              <CombinedInteractionPanel 
+                userName={digitalTwinState.user.name}
+                activeMission={digitalTwinState.activeMission}
+                onAcceptMission={handleAcceptMission}
+                onDeclineMission={handleDeclineMission}
+                challenges={digitalTwinState.challenges}
+              />
+              
+              {/* 4. Future Predictions Panel */}
+              <FuturePredictionsPanel
+                currentMetrics={digitalTwinState.health}
+                userBehavior={digitalTwinState.behavior}
+              />
+            </main>
+          </>
         )}
-        
-        {/* Demo button (for testing) - would be part of a workout tracking UI in a real app */}
-        <div className="mb-6 text-center">
-          <button
-            onClick={simulateWorkoutComplete}
-            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
-          >
-            Simulate Workout Completion
-          </button>
-        </div>
-        
-        <main className="space-y-6">
-          {/* 1. Health Panel */}
-          <HealthPanel 
-            overallHealth={digitalTwinState.health.overallHealth}
-            healthScore={digitalTwinState.health.healthScore}
-            energyScore={digitalTwinState.health.energyScore}
-            cognitiveScore={digitalTwinState.health.cognitiveScore}
-            stressScore={digitalTwinState.health.stressScore}
-          />
           
-          {/* 2. Combined Model Panel */}
-          <CombinedModelPanel 
-            models={digitalTwinState.models}
-            recentImprovements={digitalTwinState.recentImprovements}
-          />
-          
-          {/* 3. Combined Interaction Panel (replaces separate AI Chat and Life Challenges panels) */}
-          <CombinedInteractionPanel 
-            userName={digitalTwinState.user.name}
-            activeMission={digitalTwinState.activeMission}
-            onAcceptMission={handleAcceptMission}
-            onDeclineMission={handleDeclineMission}
-            challenges={digitalTwinState.challenges}
-          />
-          
-          {/* 4. Future Predictions Panel */}
-          <FuturePredictionsPanel
-            currentMetrics={digitalTwinState.health}
-            userBehavior={digitalTwinState.behavior}
-          />
-        </main>
-        
         <footer className="mt-12 text-center text-sm text-gray-500">
           <p>Digital Twin v1.0.0 &copy; {new Date().getFullYear()}</p>
           <p className="mt-1">Your data remains private and secure</p>
