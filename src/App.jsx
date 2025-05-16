@@ -1,17 +1,32 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import HealthPanel from './components/HealthPanel';
 import WorkoutCompleteModal from './components/WorkoutCompleteModal';
 import CombinedModelPanel from './components/CombinedModelPanel';
 import CombinedInteractionPanel from './components/CombinedInteractionPanel';
-import { FuturePredictionsPanel } from './components/predictions';
+import FuturePredictionsPanel from './components/predictions/FuturePredictionsPanel';
+import WebSocketConnection from './components/WebSocketConnection';
+import LoginForm from './components/LoginForm'; // Add this import
+import HealthDataUploader from './components/HealthDataUploader';
+import { getAuthToken, getUserFromToken } from './utils/auth';
+import { fetchHealthData } from './utils/healthDataService';
+
 import './App.css';
 
 function App() {
   // Reference to the top of the page
   const topRef = useRef(null);
   
+  // Authentication state
+  const [authToken, setAuthToken] = useState(getAuthToken());
+  const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(!!getAuthToken());
+  
+  // Data refresh state
+  const [lastDataUpdate, setLastDataUpdate] = useState(Date.now());
+  
   // Modal state
   const [showWorkoutModal, setShowWorkoutModal] = useState(false);
+  const [showDataUpdateNotification, setShowDataUpdateNotification] = useState(false);
   
   // Mock state for the entire app
   const [digitalTwinState, setDigitalTwinState] = useState({
@@ -161,6 +176,30 @@ function App() {
     ]
   });
   
+  // Initialize user on component mount
+  useEffect(() => {
+    if (authToken) {
+      const userData = getUserFromToken();
+      setUser(userData);
+      setIsAuthenticated(true);
+    }
+  }, [authToken]);
+
+  // Handle successful login
+  const handleLoginSuccess = (token) => {
+    setAuthToken(token);
+    const userData = getUserFromToken();
+    setUser(userData);
+    setIsAuthenticated(true);
+  };
+
+  // Handle health data upload success
+  const handleUploadSuccess = (data) => {
+    console.log('Health data uploaded successfully:', data);
+    // You could trigger a refresh of health data here
+    fetchHealthData();
+  };
+  
   // Focus the top element on page load
   useEffect(() => {
     // Set focus to the top element when component mounts
@@ -168,6 +207,76 @@ function App() {
       topRef.current.focus();
     }
   }, []);
+  
+  // Fetch health data from backend API
+  const fetchHealthData = useCallback(async () => {
+    if (!authToken) return;
+    
+    try {
+      // In a real app, you would make an API call like this:
+      // const response = await fetch('/api/health-data', {
+      //   headers: {
+      //     'Authorization': `Bearer ${authToken}`
+      //   }
+      // });
+      // const data = await response.json();
+      
+      // For demo purposes, we'll just simulate a data update
+      console.log('Fetching new health data...');
+      
+      // Simulate API response with random improvements
+      const healthImprovement = Math.floor(Math.random() * 5) + 1;
+      const energyImprovement = Math.floor(Math.random() * 6) + 2;
+      const cognitiveImprovement = Math.floor(Math.random() * 4) + 1;
+      const stressImprovement = -1 * (Math.floor(Math.random() * 5) + 1); // Negative because stress reduction is good
+      
+      // Update digital twin state with new health metrics
+      setDigitalTwinState(prev => ({
+        ...prev,
+        health: {
+          overallHealth: Math.min(100, prev.health.overallHealth + healthImprovement),
+          healthScore: Math.min(100, prev.health.healthScore + healthImprovement),
+          energyScore: Math.min(100, prev.health.energyScore + energyImprovement),
+          cognitiveScore: Math.min(100, prev.health.cognitiveScore + cognitiveImprovement),
+          stressScore: Math.max(0, prev.health.stressScore + stressImprovement)
+        },
+        lastWorkout: {
+          ...prev.lastWorkout,
+          completed: true,
+          date: new Date().toISOString(),
+          improvements: {
+            healthScore: healthImprovement,
+            energyScore: energyImprovement,
+            cognitiveScore: cognitiveImprovement,
+            stressScore: stressImprovement
+          }
+        }
+      }));
+      
+      // Update last data update timestamp
+      setLastDataUpdate(Date.now());
+      
+    } catch (error) {
+      console.error('Error fetching health data:', error);
+    }
+  }, [authToken]);
+  
+  // Handle new data notifications from WebSocket
+  const handleNewDataNotification = useCallback((data) => {
+    console.log('New health data notification received:', data);
+    
+    // Show notification
+    setShowDataUpdateNotification(true);
+    
+    // Hide notification after 5 seconds
+    setTimeout(() => {
+      setShowDataUpdateNotification(false);
+    }, 5000);
+    
+    // Fetch the new data
+    fetchHealthData();
+    
+  }, [fetchHealthData]);
   
   // Simulate workout completion (for demo purposes)
   const simulateWorkoutComplete = () => {
@@ -226,53 +335,77 @@ function App() {
       />
       
       <div className="max-w-2xl mx-auto">
-        <header className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-indigo-800">EvolveMe</h1>
-          <p className="text-gray-600">Two journeys. One evolution. Real results.</p>
+        <header className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-indigo-800">EvolveMe</h1>
+            <p className="text-gray-600">Two journeys. One evolution. Real results.</p>
+          </div>
+          
+          {/* WebSocket connection and notifications */}
+          {authToken && (
+            <WebSocketConnection 
+              token={authToken} 
+              onNewData={handleNewDataNotification} 
+            />
+          )}
         </header>
+
+        {/* Show login form if not authenticated */}
+        {!isAuthenticated ? (
+          <LoginForm onLoginSuccess={handleLoginSuccess} />
+        ) : (
+          <>
+            {/* New data notification */}
+            {showDataUpdateNotification && (
+              <div className="fixed top-4 right-4 bg-green-600 text-white py-2 px-4 rounded shadow-lg animate-pulse z-50">
+                New health data available! Dashboard updated.
+              </div>
+            )}
         
-        {/* Demo button (for testing) - would be part of a workout tracking UI in a real app */}
-        <div className="mb-6 text-center">
-          <button
-            onClick={simulateWorkoutComplete}
-            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
-          >
-            Simulate Workout Completion
-          </button>
-        </div>
-        
-        <main className="space-y-6">
-          {/* 1. Health Panel */}
-          <HealthPanel 
-            overallHealth={digitalTwinState.health.overallHealth}
-            healthScore={digitalTwinState.health.healthScore}
-            energyScore={digitalTwinState.health.energyScore}
-            cognitiveScore={digitalTwinState.health.cognitiveScore}
-            stressScore={digitalTwinState.health.stressScore}
-          />
+            {/* Demo button (for testing) - would be part of a workout tracking UI in a real app */}
+            <div className="mb-6 text-center">
+              <button
+                onClick={simulateWorkoutComplete}
+                className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Simulate Workout Completion
+              </button>
+            </div>
           
-          {/* 2. Combined Model Panel */}
-          <CombinedModelPanel 
-            models={digitalTwinState.models}
-            recentImprovements={digitalTwinState.recentImprovements}
-          />
+            <main className="space-y-6">
+              {/* 1. Health Panel */}
+              <HealthPanel 
+                overallHealth={digitalTwinState.health.overallHealth}
+                healthScore={digitalTwinState.health.healthScore}
+                energyScore={digitalTwinState.health.energyScore}
+                cognitiveScore={digitalTwinState.health.cognitiveScore}
+                stressScore={digitalTwinState.health.stressScore}
+              />
+              
+              {/* 2. Combined Model Panel */}
+              <CombinedModelPanel 
+                models={digitalTwinState.models}
+                recentImprovements={digitalTwinState.recentImprovements}
+              />
+              
+              {/* 3. Combined Interaction Panel (replaces separate AI Chat and Life Challenges panels) */}
+              <CombinedInteractionPanel 
+                userName={digitalTwinState.user.name}
+                activeMission={digitalTwinState.activeMission}
+                onAcceptMission={handleAcceptMission}
+                onDeclineMission={handleDeclineMission}
+                challenges={digitalTwinState.challenges}
+              />
+              
+              {/* 4. Future Predictions Panel */}
+              <FuturePredictionsPanel
+                currentMetrics={digitalTwinState.health}
+                userBehavior={digitalTwinState.behavior}
+              />
+            </main>
+          </>
+        )}
           
-          {/* 3. Combined Interaction Panel (replaces separate AI Chat and Life Challenges panels) */}
-          <CombinedInteractionPanel 
-            userName={digitalTwinState.user.name}
-            activeMission={digitalTwinState.activeMission}
-            onAcceptMission={handleAcceptMission}
-            onDeclineMission={handleDeclineMission}
-            challenges={digitalTwinState.challenges}
-          />
-          
-          {/* 4. Future Predictions Panel */}
-          <FuturePredictionsPanel
-            currentMetrics={digitalTwinState.health}
-            userBehavior={digitalTwinState.behavior}
-          />
-        </main>
-        
         <footer className="mt-12 text-center text-sm text-gray-500">
           <p>Digital Twin v1.0.0 &copy; {new Date().getFullYear()}</p>
           <p className="mt-1">Your data remains private and secure</p>
