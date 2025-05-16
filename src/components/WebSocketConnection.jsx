@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { MessageSquare, Bell, X } from 'lucide-react';
-import { WS_ENDPOINT } from '../config/apiConfig';
 
 const WebSocketConnection = ({ token, onNewData }) => {
   const [connected, setConnected] = useState(false);
@@ -9,12 +8,14 @@ const WebSocketConnection = ({ token, onNewData }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const wsRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
+  const reconnectAttempts = useRef(0);
+  const pingIntervalRef = useRef(null);
 
   // Connect to WebSocket server
   const connectWebSocket = useCallback(() => {
     // Close existing connection if any
     if (wsRef.current) {
-      wsRef.current.close();
+      wsRef.current.close(1000, "Reconnecting");
     }
 
     // Clear any pending reconnect timeout
@@ -24,8 +25,8 @@ const WebSocketConnection = ({ token, onNewData }) => {
     }
 
     try {
-      // Create new WebSocket connection with auth token
-      const wsUrl = `${WS_ENDPOINT}?token=${token}`;
+      const wsUrl = `${process.env.REACT_APP_WS_URL || 'ws://localhost:8080/ws'}?token=${encodeURIComponent(token)}`;
+      console.log('Connecting to WebSocket at:', wsUrl);
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
@@ -33,39 +34,77 @@ const WebSocketConnection = ({ token, onNewData }) => {
       ws.addEventListener('open', () => {
         console.log('WebSocket connection established');
         setConnected(true);
-        
-        // Send authentication token
-        ws.send(JSON.stringify({ type: 'auth', token }));
+        reconnectAttempts.current = 0; // Reset attempts on successful connection
+
+
+        // Send an initial message to test the connection
+        ws.send(JSON.stringify({ 
+          type: 'ping',
+          timestamp: new Date().toISOString()
+        }));
+
+        // Set up regular pings to keep connection alive (every 15 seconds)
+        pingIntervalRef.current = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            console.log("Sending ping to keep connection alive");
+            ws.send(JSON.stringify({ 
+              type: 'ping',
+              timestamp: new Date().toISOString()
+            }));
+          }
+        }, 15000);
       });
 
-      // Listen for messages
       ws.addEventListener('message', (event) => {
         try {
-          const data = JSON.parse(event.data);
-          console.log('WebSocket message received:', data);
-          
-          // Handle different message types
-          if (data.event_type === 'new_health_data') {
-            // Add to notifications
-            const newNotification = {
-              id: Date.now(),
-              type: 'new_health_data',
-              message: data.message,
-              timestamp: new Date(data.timestamp),
-              syncId: data.sync_id,
-              read: false
-            };
-            
-            setNotifications(prev => [newNotification, ...prev].slice(0, 50)); // Keep last 50 notifications
-            setUnreadCount(prev => prev + 1);
-            
-            // Notify parent component to fetch new data
-            if (onNewData) {
-              onNewData(data);
-            }
+            const data = JSON.parse(event.data);
+            console.log('WebSocket message received:', data);
+
+            switch (data.type) {
+
+              case 'welcome':
+                  console.log('WebSocket connection confirmed with server - User ID:', data.user_id);
+                  break;
+                  
+              case 'ping':
+                  console.log('Ping received from server');
+                  if (ws.readyState === WebSocket.OPEN) {
+                      ws.send(JSON.stringify({
+                          type: 'pong',
+                          timestamp: new Date().toISOString()
+                      }));
+                  }
+                  break;
+                  
+              case 'pong':
+                  console.log('Pong received from server - connection healthy');
+                  break;
+                  
+              case 'new_health_data':
+                  const newNotification = {
+                      id: Date.now(),
+                      type: 'new_health_data',
+                      message: data.message || 'New health data available',
+                      timestamp: new Date(data.timestamp || Date.now()),
+                      syncId: data.sync_id,
+                      read: false
+                  };
+                  
+                  setNotifications(prev => [newNotification, ...prev].slice(0, 50));
+                  setUnreadCount(prev => prev + 1);
+                  
+                  // Notify parent component
+                  if (onNewData) {
+                      onNewData(data);
+                  }
+                  break;
+                  
+              default:
+                  console.log('Unknown message format received:', data);
           }
         } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
+            console.error('Error parsing WebSocket message:', error);
+            console.log('Raw message content:', event.data);
         }
       });
 
@@ -73,13 +112,29 @@ const WebSocketConnection = ({ token, onNewData }) => {
       ws.addEventListener('close', (event) => {
         console.log('WebSocket connection closed:', event.code, event.reason);
         setConnected(false);
+
+        // Clear the ping interval
+        if (pingIntervalRef.current) {
+          clearInterval(pingIntervalRef.current);
+          pingIntervalRef.current = null;
+        }
+
+        // Don't reconnect if it was a normal closure
+        if (event.code === 1000) {
+          console.log('WebSocket closed normally, not reconnecting');
+          return;
+        }
         
-        // Attempt to reconnect after delay
+        // Use exponential backoff for reconnection
         if (!reconnectTimeoutRef.current) {
+          const delay = Math.min(30000, 5000 * Math.pow(2, reconnectAttempts.current));
+          console.log(`Attempting to reconnect WebSocket in ${delay/1000}s...`);
+          
           reconnectTimeoutRef.current = setTimeout(() => {
-            console.log('Attempting to reconnect WebSocket...');
+            reconnectAttempts.current += 1;
+            reconnectTimeoutRef.current = null;
             connectWebSocket();
-          }, 5000); // Reconnect after 5 seconds
+          }, delay);
         }
       });
 
@@ -101,11 +156,16 @@ const WebSocketConnection = ({ token, onNewData }) => {
     
     // Cleanup on unmount
     return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
+      if (pingIntervalRef.current) {
+        clearInterval(pingIntervalRef.current);
       }
+      
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
+      }
+      
+      if (wsRef.current) {
+        wsRef.current.close(1000, "Component unmounting");
       }
     };
   }, [token, connectWebSocket]);
