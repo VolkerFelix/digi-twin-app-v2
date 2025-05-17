@@ -5,8 +5,8 @@ import CombinedModelPanel from './components/CombinedModelPanel';
 import CombinedInteractionPanel from './components/CombinedInteractionPanel';
 import FuturePredictionsPanel from './components/predictions/FuturePredictionsPanel';
 import WebSocketConnection from './components/WebSocketConnection';
-import LoginForm from './components/LoginForm'; // Add this import
-import HealthDataUploader from './components/HealthDataUploader';
+import LoginForm from './components/LoginForm';
+import UnifiedHealthUploader from './components/UnifiedHealthUploader';
 import { getAuthToken, getUserFromToken } from './utils/auth';
 import { fetchHealthData } from './utils/healthDataService';
 
@@ -18,7 +18,6 @@ function App() {
   
   // Authentication state
   const [authToken, setAuthToken] = useState(getAuthToken());
-  const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(!!getAuthToken());
   
   // Data refresh state
@@ -27,6 +26,7 @@ function App() {
   // Modal state
   const [showWorkoutModal, setShowWorkoutModal] = useState(false);
   const [showDataUpdateNotification, setShowDataUpdateNotification] = useState(false);
+  const [notificationType, setNotificationType] = useState(''); // 'sleep', 'workout', etc.
   
   // Mock state for the entire app
   const [digitalTwinState, setDigitalTwinState] = useState({
@@ -179,8 +179,6 @@ function App() {
   // Initialize user on component mount
   useEffect(() => {
     if (authToken) {
-      const userData = getUserFromToken();
-      setUser(userData);
       setIsAuthenticated(true);
     }
   }, [authToken]);
@@ -188,16 +186,43 @@ function App() {
   // Handle successful login
   const handleLoginSuccess = (token) => {
     setAuthToken(token);
-    const userData = getUserFromToken();
-    setUser(userData);
     setIsAuthenticated(true);
   };
 
   // Handle health data upload success
-  const handleUploadSuccess = (data) => {
+  const handleHealthDataUpload = (data) => {
     console.log('Health data uploaded successfully:', data);
-    // You could trigger a refresh of health data here
-    fetchHealthData();
+    
+    // Determine the data type based on the data_types field in the response
+    let type = 'general';
+    
+    if (data.data_types && Array.isArray(data.data_types)) {
+      if (data.data_types.includes('sleep')) {
+        type = 'sleep';
+      } else if (data.data_types.includes('steps') || data.data_types.includes('energy')) {
+        type = 'activity';
+      } else if (data.data_types.includes('heart_rate') || data.data_types.includes('blood_oxygen')) {
+        type = 'vitals';
+      }
+    }
+    
+    // Set notification type for custom messaging
+    setNotificationType(type);
+    
+    // Show notification
+    setShowDataUpdateNotification(true);
+    
+    // Hide notification after 5 seconds
+    setTimeout(() => {
+      setShowDataUpdateNotification(false);
+    }, 5000);
+    
+    // Refresh appropriate data based on type
+    if (type === 'sleep' || type === 'activity' || type === 'vitals') {
+      fetchHealthData();
+    } else {
+      fetchHealthData();
+    }
   };
   
   // Focus the top element on page load
@@ -265,6 +290,23 @@ function App() {
   const handleNewDataNotification = useCallback((data) => {
     console.log('New health data notification received:', data);
     
+    // Determine the notification type based on the event data
+    let type = 'general';
+    if (data.event_type === 'sleep_state_updated') {
+      type = 'sleep';
+    } else if (data.event_type === 'activity_state_updated') {
+      type = 'activity';
+    } else if (data.event_type === 'vitals_state_updated') {
+      type = 'vitals';
+    } else if (data.event_type === 'twin_state_updated') {
+      type = 'twin';
+    } else if (data.event_type === 'health_state_updated') {
+      type = 'health';
+    }
+    
+    // Set notification type
+    setNotificationType(type);
+    
     // Show notification
     setShowDataUpdateNotification(true);
     
@@ -276,7 +318,7 @@ function App() {
     // Fetch the new data
     fetchHealthData();
     
-  }, [fetchHealthData]);
+  }, []);
   
   // Simulate workout completion (for demo purposes)
   const simulateWorkoutComplete = () => {
@@ -358,9 +400,24 @@ function App() {
             {/* New data notification */}
             {showDataUpdateNotification && (
               <div className="fixed top-4 right-4 bg-green-600 text-white py-2 px-4 rounded shadow-lg animate-pulse z-50">
-                New health data available! Dashboard updated.
+                {notificationType === 'sleep' 
+                  ? 'Sleep data analyzed! Your Digital Twin updated with new sleep insights.'
+                  : notificationType === 'activity'
+                    ? 'Activity data analyzed! Your fitness model has been updated.'
+                    : notificationType === 'vitals'
+                      ? 'Vitals data analyzed! Your health monitoring model has been updated.'
+                      : notificationType === 'twin'
+                        ? 'Your Digital Twin has evolved with new health insights!'
+                        : 'Health data processed! Your Digital Twin has been updated.'}
               </div>
             )}
+            
+            {/* Unified Health Data Uploader */}
+            <div className="mb-6">
+              <UnifiedHealthUploader
+                onUploadSuccess={handleHealthDataUpload}
+              />
+            </div>
         
             {/* Demo button (for testing) - would be part of a workout tracking UI in a real app */}
             <div className="mb-6 text-center">
